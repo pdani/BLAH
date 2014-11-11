@@ -39,6 +39,8 @@ workdir=$PWD
 
 proxy_dir=~/.blah_jobproxy_dir
 
+queuelist="/var/lib/blah/queuelist"
+
 ###############################################################
 # Parse parameters
 ###############################################################
@@ -263,6 +265,16 @@ $submit_file_environment
 leave_in_queue = JobStatus == 4 && (CompletionDate =?= UNDEFINED || CompletionDate == 0 || ((CurrentTime - CompletionDate) < 1800))
 EOF
 
+# Add custom queue Attribute
+if [ "x$queue" == "x" ] || ! grep -q "$queue" $queuelist > /dev/null 2>&1; then
+    echo "The given queuename '$queue' doesn't exist, failed to submit"
+    echo Error
+    rm -rf $submit_file
+    exit 1
+fi
+
+echo "+BatchQueue=\"$queue\"" >> $submit_file
+
 # Set up temp file name for requirement passing
 if [ ! -z $req_file ] ; then
    tmp_req_file=${req_file}-temp_req_script
@@ -274,6 +286,7 @@ fi
 local_submit_attributes_file=${blah_libexec_directory}/condor_local_submit_attributes.sh
 if [ -r $local_submit_attributes_file ] ; then
     echo \#\!/bin/sh > $tmp_req_file
+    echo "queue=$queue" >> $tmp_req_file
     if [ ! -z $req_file ] ; then
         cat $req_file >> $tmp_req_file
     fi
@@ -296,22 +309,22 @@ echo "queue 1" >> $submit_file
 # first param is the name of the queue and the second is the name of
 # the pool where the queue exists, i.e. a Collector's name.
 
-echo $queue | grep "/" >&/dev/null
-# If there is a "/" we need to split out the pool and queue
-if [ "$?" == "0" ]; then
-    pool=${queue#*/}
-    queue=${queue%/*}
-fi
+#echo $queue | grep "/" >&/dev/null
+## If there is a "/" we need to split out the pool and queue
+#if [ "$?" == "0" ]; then
+#    pool=${queue#*/}
+#    queue=${queue%/*}
+#fi
 
-if [ -z "$queue" ]; then
+#if [ -z "$queue" ]; then
     target=""
-else
-    if [ -z "$pool" ]; then
-	target="-name $queue"
-    else
-	target="-pool $pool -name $queue"
-    fi
-fi
+#else
+#    if [ -z "$pool" ]; then
+#	target="-remote $queue"
+#    else
+#	target="-pool $pool -name $queue"
+#    fi
+#fi
 
 now=`date +%s`
 let now=$now-1
@@ -319,8 +332,10 @@ let now=$now-1
 full_result=$($condor_binpath/condor_submit $target $submit_file)
 return_code=$?
 
-if [ "$return_code" == "0" ] ; then
-    jobID=`echo $full_result | awk '{print $8}' | tr -d '.'`
+full_result=$(echo $full_result | sed 's/.*submitted to cluster \([0-9]*\)./\1/')
+
+if [[ "$return_code" == "0" && "x$full_result" != "x" ]] ; then
+    jobID=`condor_q -format "%s" GlobalJobId $full_result`
     blahp_jobID="condor/$jobID/$queue/$pool"
 
     if [ "x$job_registry" != "x" ]; then
