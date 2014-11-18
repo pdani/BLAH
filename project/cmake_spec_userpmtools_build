@@ -1,4 +1,4 @@
-BuildRequires:  cmake
+BuildRequires:  cmake, libtool, classads-devel, docbook-style-xsl, libxslt-devel, globus-common-devel, globus-io-devel, globus-gssapi-gsi-devel, globus-gss-assist-devel, globus-gsi-credential-devel, globus-gsi-proxy-core-devel
 
 
 %define srcdirname %{name}-%{version}-Source

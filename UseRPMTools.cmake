@@ -88,12 +88,12 @@ IF (UNIX)
 Summary:        ${RPMNAME}
 Name:           ${RPMNAME}
 Version:        ${PACKAGE_VERSION}
-Release:        1
+Release:        CERN1
 License:        Unknown
 Group:          Unknown
 Source:         ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root
-BuildRequires:	cmake
+BuildRequires:	cmake, libtool, classads-devel, docbook-style-xsl, libxslt-devel, globus-common-devel, globus-io-devel, globus-gssapi-gsi-devel, globus-gss-assist-devel, globus-gsi-credential-devel, globus-gsi-proxy-core-devel
 
 %define prefix /opt/${RPMNAME}-%{version}
 %define rpmprefix $RPM_BUILD_ROOT%{prefix}

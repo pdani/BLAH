@@ -15,11 +15,11 @@
 
 cmake_minimum_required(VERSION 2.6)
 
-project(BLAH)
+project(glite-ce-blahp)
 
 # CPack info
 
-set(CPACK_RPM_PACKAGE_RELEASE "1")
+set(CPACK_RPM_PACKAGE_RELEASE "CERN1")
 
 if (UNIX AND NOT APPLE)
 set(CPACK_GENERATOR "STGZ;DEB;RPM")
