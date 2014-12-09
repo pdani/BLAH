@@ -40,6 +40,7 @@ workdir=$PWD
 proxy_dir=~/.blah_jobproxy_dir
 
 queuelist="/var/lib/blah/queuelist"
+usergroup_mapfile="/var/lib/blah/usergroup_mapfile"
 
 ###############################################################
 # Parse parameters
@@ -247,6 +248,18 @@ then
   echo -e $xtra_args >> $submit_file
 fi
 
+username="`id -un`"
+mapping=`grep "^$username [^\s]*$" "$usergroup_mapfile"`
+if [ "$?" == "0" ]
+then
+    groupname="`echo "$mapping" | cut -d" " -f2`"
+else
+    echo "The given username '$username' doesn't exist in the user->group mapping file, failed to submit"
+    echo Error
+    rm -rf $submit_file
+    exit 1
+fi
+
 cat >> $submit_file << EOF
 # We insist on new style quoting in Condor
 arguments = $arguments
@@ -263,6 +276,9 @@ $submit_file_environment
 # Hang around for 1 day (86400 seconds) ?
 # Hang around for 30 minutes (1800 seconds) ?
 leave_in_queue = JobStatus == 4 && (CompletionDate =?= UNDEFINED || CompletionDate == 0 || ((CurrentTime - CompletionDate) < 1800))
+
+accounting_group = $groupname
+accounting_group_user = $username
 EOF
 
 # Add custom queue Attribute
